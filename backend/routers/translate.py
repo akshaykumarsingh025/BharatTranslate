@@ -9,10 +9,13 @@ from services.translation_engine import translation_engine
 router = APIRouter()
 
 
+from typing import Optional
+
 class TranslateRequest(BaseModel):
     text: str
     source_lang: str
     target_lang: str
+    dialect: Optional[str] = None
 
 
 class TranslateResponse(BaseModel):
@@ -25,7 +28,12 @@ class TranslateResponse(BaseModel):
 @router.post("/translate/text", response_model=TranslateResponse)
 async def translate_text(req: TranslateRequest):
     """Translate text between any two supported Indian languages."""
-    result = await translation_engine.translate(req.text, req.source_lang, req.target_lang)
+    result = await translation_engine.translate(
+        text=req.text, 
+        src_lang=req.source_lang, 
+        tgt_lang=req.target_lang,
+        dialect=req.dialect
+    )
     return TranslateResponse(
         translated_text=result,
         source_lang=req.source_lang,

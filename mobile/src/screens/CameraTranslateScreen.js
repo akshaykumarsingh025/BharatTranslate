@@ -7,8 +7,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Speech from 'expo-speech';
 
 export default function CameraTranslateScreen() {
-    const [sourceLang, setSourceLang] = useState({ code: 'en', name: 'English' });
-    const [targetLang, setTargetLang] = useState({ code: 'hi', name: 'Hindi' });
+    const [sourceLang, setSourceLang] = useState('en');
+    const [targetLang, setTargetLang] = useState('hi');
     const [imageUri, setImageUri] = useState(null);
     const [extractedText, setExtractedText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
@@ -17,11 +17,11 @@ export default function CameraTranslateScreen() {
     const extractText = async (uri) => {
         setIsLoading(true);
         try {
-            const result = await TranslateAPI.extractTextFromImage(uri, sourceLang.code);
+            const result = await TranslateAPI.extractTextFromImage(uri, sourceLang);
             if (result) {
                 setExtractedText(result);
                 // Also kick off translation automatically
-                const translated = await TranslateAPI.translateText(result, sourceLang.code, targetLang.code);
+                const translated = await TranslateAPI.translateText(result, sourceLang, targetLang);
                 setTranslatedText(translated);
             } else {
                 Alert.alert('Extration Error', 'Could not read text from image.');
@@ -72,12 +72,23 @@ export default function CameraTranslateScreen() {
         if (!extractedText.trim()) return;
         setIsLoading(true);
         try {
-            const result = await TranslateAPI.translateText(extractedText, sourceLang.code, targetLang.code);
+            const result = await TranslateAPI.translateText(extractedText, sourceLang, targetLang);
             setTranslatedText(result);
         } catch (e) {
             setTranslatedText('Translation error.');
         }
         setIsLoading(false);
+    };
+
+    const getTTSLangCode = (lang) => {
+        const map = {
+            'en': 'en-US', 'hi': 'hi-IN', 'bn': 'bn-IN', 'ta': 'ta-IN', 'te': 'te-IN',
+            'mr': 'mr-IN', 'gu': 'gu-IN', 'kn': 'kn-IN', 'ml': 'ml-IN', 'pa': 'pa-IN',
+            'or': 'or-IN', 'as': 'as-IN', 'ur': 'ur-IN', 'sa': 'sa-IN', 'mai': 'mai-IN',
+            'sd': 'sd-IN', 'kok': 'kok-IN', 'doi': 'doi-IN', 'mni': 'mni-IN', 'sat': 'sat-IN',
+            'kas': 'ks-IN', 'brx': 'brx-IN'
+        };
+        return map[lang] || 'en-US';
     };
 
     return (
@@ -87,9 +98,9 @@ export default function CameraTranslateScreen() {
             </View>
 
             <View style={styles.languageBar}>
-                <LanguagePicker selectedLang={sourceLang} onSelect={setSourceLang} />
+                <LanguagePicker selectedLanguage={sourceLang} onSelectLanguage={setSourceLang} />
                 <Ionicons name="arrow-forward" size={24} color="#666" style={{ marginHorizontal: 10 }} />
-                <LanguagePicker selectedLang={targetLang} onSelect={setTargetLang} />
+                <LanguagePicker selectedLanguage={targetLang} onSelectLanguage={setTargetLang} />
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
@@ -139,13 +150,13 @@ export default function CameraTranslateScreen() {
 
                 {(translatedText || isLoading) ? (
                     <View style={styles.outputBox}>
-                        <Text style={styles.outputLabel}>{targetLang.name}:</Text>
+                        <Text style={styles.outputLabel}>{targetLang}:</Text>
                         {isLoading ? (
                             <ActivityIndicator size="large" color="#ff6b6b" />
                         ) : (
                             <>
                                 <Text style={styles.outputText}>{translatedText}</Text>
-                                <TouchableOpacity style={styles.speakBtn} onPress={() => Speech.speak(translatedText, { language: targetLang.code })}>
+                                <TouchableOpacity style={styles.speakBtn} onPress={() => Speech.speak(translatedText, { language: getTTSLangCode(targetLang) })}>
                                     <Ionicons name="volume-medium" size={24} color="#ff6b6b" />
                                     <Text style={styles.speakLabel}>Listen</Text>
                                 </TouchableOpacity>

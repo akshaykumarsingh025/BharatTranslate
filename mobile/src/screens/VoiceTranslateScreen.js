@@ -7,8 +7,8 @@ import { Audio } from 'expo-av';
 import { TranslateAPI } from '../services/translateApi';
 
 export default function VoiceTranslateScreen() {
-    const [sourceLang, setSourceLang] = useState({ code: 'en', name: 'English' });
-    const [targetLang, setTargetLang] = useState({ code: 'hi', name: 'Hindi' });
+    const [sourceLang, setSourceLang] = useState('en');
+    const [targetLang, setTargetLang] = useState('hi');
     const [sourceText, setSourceText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -75,12 +75,12 @@ export default function VoiceTranslateScreen() {
             setRecording(null);
 
             // Send audio to AI Kosh ASR backend
-            const transcribedText = await TranslateAPI.transcribeAudio(uri, sourceLang.code);
+            const transcribedText = await TranslateAPI.transcribeAudio(uri, sourceLang);
 
             if (transcribedText) {
                 setSourceText(transcribedText);
                 // Auto-translate after transcription
-                const result = await TranslateAPI.translateText(transcribedText, sourceLang.code, targetLang.code);
+                const result = await TranslateAPI.translateText(transcribedText, sourceLang, targetLang);
                 setTranslatedText(result);
             } else {
                 Alert.alert('Error', 'Failed to recognize speech.');
@@ -104,7 +104,7 @@ export default function VoiceTranslateScreen() {
         setIsLoading(true);
         setTranslatedText('');
         try {
-            const result = await TranslateAPI.translateText(sourceText, sourceLang.code, targetLang.code);
+            const result = await TranslateAPI.translateText(sourceText, sourceLang, targetLang);
             setTranslatedText(result);
         } catch (e) {
             setTranslatedText('Translation error.');
@@ -112,8 +112,19 @@ export default function VoiceTranslateScreen() {
         setIsLoading(false);
     };
 
+    const getTTSLangCode = (lang) => {
+        const map = {
+            'en': 'en-US', 'hi': 'hi-IN', 'bn': 'bn-IN', 'ta': 'ta-IN', 'te': 'te-IN',
+            'mr': 'mr-IN', 'gu': 'gu-IN', 'kn': 'kn-IN', 'ml': 'ml-IN', 'pa': 'pa-IN',
+            'or': 'or-IN', 'as': 'as-IN', 'ur': 'ur-IN', 'sa': 'sa-IN', 'mai': 'mai-IN',
+            'sd': 'sd-IN', 'kok': 'kok-IN', 'doi': 'doi-IN', 'mni': 'mni-IN', 'sat': 'sat-IN',
+            'kas': 'ks-IN', 'brx': 'brx-IN'
+        };
+        return map[lang] || 'en-US';
+    };
+
     const handleSpeak = (text, langCode) => {
-        if (text) Speech.speak(text, { language: langCode });
+        if (text) Speech.speak(text, { language: getTTSLangCode(langCode) });
     };
 
     return (
@@ -123,9 +134,9 @@ export default function VoiceTranslateScreen() {
             </View>
 
             <View style={styles.languageBar}>
-                <LanguagePicker selectedLang={sourceLang} onSelect={setSourceLang} />
+                <LanguagePicker selectedLanguage={sourceLang} onSelectLanguage={setSourceLang} />
                 <Ionicons name="arrow-forward" size={24} color="#666" style={{ marginHorizontal: 10 }} />
-                <LanguagePicker selectedLang={targetLang} onSelect={setTargetLang} />
+                <LanguagePicker selectedLanguage={targetLang} onSelectLanguage={setTargetLang} />
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
@@ -155,12 +166,12 @@ export default function VoiceTranslateScreen() {
                     <TextInput
                         style={styles.textInput}
                         multiline
-                        placeholder={`Type in ${sourceLang.name}...`}
+                        placeholder={`Type in ${sourceLang}...`}
                         value={sourceText}
                         onChangeText={setSourceText}
                     />
                     {sourceText ? (
-                        <TouchableOpacity style={styles.speakBtn} onPress={() => handleSpeak(sourceText, sourceLang.code)}>
+                        <TouchableOpacity style={styles.speakBtn} onPress={() => handleSpeak(sourceText, sourceLang)}>
                             <Ionicons name="volume-medium" size={22} color="#ff6b6b" />
                         </TouchableOpacity>
                     ) : null}
@@ -173,13 +184,13 @@ export default function VoiceTranslateScreen() {
 
                 {(translatedText || isLoading) ? (
                     <View style={styles.resultCard}>
-                        <Text style={styles.resultLabel}>{targetLang.name}:</Text>
+                        <Text style={styles.resultLabel}>{targetLang}:</Text>
                         {isLoading ? (
                             <ActivityIndicator size="large" color="#ff6b6b" style={{ marginVertical: 20 }} />
                         ) : (
                             <>
                                 <Text style={styles.resultText}>{translatedText}</Text>
-                                <TouchableOpacity style={styles.speakBtn} onPress={() => handleSpeak(translatedText, targetLang.code)}>
+                                <TouchableOpacity style={styles.speakBtn} onPress={() => handleSpeak(translatedText, targetLang)}>
                                     <Ionicons name="volume-medium" size={24} color="#ff6b6b" />
                                     <Text style={styles.speakLabel}>Listen</Text>
                                 </TouchableOpacity>
@@ -209,13 +220,13 @@ const styles = StyleSheet.create({
     micButtonActive: { backgroundColor: '#ff4757', borderColor: '#ff4757' },
     micLabel: { fontSize: 16, fontWeight: 'bold', color: '#666' },
     orDivider: { fontSize: 13, color: '#aaa', marginVertical: 12, textAlign: 'center' },
-    inputCard: { width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: 14, minHeight: 80, elevation: 1, position: 'relative' },
+    inputCard: { width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: 14, paddingBottom: 40, minHeight: 80, elevation: 1, position: 'relative' },
     textInput: { fontSize: 16, color: '#333', minHeight: 60 },
-    speakBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, position: 'absolute', bottom: 10, right: 10, padding: 6 },
+    speakBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, position: 'absolute', bottom: 10, right: 10, padding: 6, zIndex: 10 },
     speakLabel: { fontSize: 12, color: '#ff6b6b', fontWeight: 'bold' },
     translateButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ff6b6b', padding: 14, borderRadius: 8, marginVertical: 16, width: '100%', justifyContent: 'center' },
     translateButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-    resultCard: { width: '100%', backgroundColor: '#e9f5ff', borderRadius: 12, padding: 16, minHeight: 80, elevation: 1, position: 'relative' },
+    resultCard: { width: '100%', backgroundColor: '#e9f5ff', borderRadius: 12, padding: 16, paddingBottom: 40, minHeight: 80, elevation: 1, position: 'relative' },
     resultLabel: { fontSize: 12, fontWeight: 'bold', color: '#888', marginBottom: 8 },
     resultText: { fontSize: 22, color: '#333', fontWeight: '500', lineHeight: 32 },
 });

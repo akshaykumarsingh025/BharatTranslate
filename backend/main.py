@@ -1,19 +1,9 @@
-"""
-BharatTranslate Backend — FastAPI Server
-Powered by AI Kosh / IndicTrans2 models from AI4Bharat
-"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers import asr, ocr, translate, transliterate, tts, phrasebook, document
 
-from routers import translate, transliterate, tts, asr, ocr
+app = FastAPI(title="BharatTranslate API")
 
-app = FastAPI(
-    title="BharatTranslate API",
-    description="Indic language translation powered by AI Kosh (IndicTrans2)",
-    version="1.0.0",
-)
-
-# CORS — allow mobile app to connect
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,27 +12,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(translate.router, prefix="/v1", tags=["Translation"])
-app.include_router(transliterate.router, prefix="/v1", tags=["Transliteration"])
-app.include_router(tts.router, prefix="/v1", tags=["Text-to-Speech"])
-app.include_router(asr.router, prefix="/v1", tags=["Speech-to-Text"])
-app.include_router(ocr.router, prefix="/v1", tags=["Image-to-Text"])
-
+app.include_router(translate.router, prefix="/v1", tags=["Translate"])
+app.include_router(transliterate.router, prefix="/v1", tags=["Transliterate"])
+app.include_router(asr.router, prefix="/v1", tags=["ASR"])
+app.include_router(tts.router, prefix="/v1", tags=["TTS"])
+app.include_router(ocr.router, prefix="/v1", tags=["OCR"])
+app.include_router(phrasebook.router, prefix="/v1/phrasebook", tags=["Phrasebook"])
+app.include_router(document.router, prefix="/v1/document", tags=["Document"])
 
 @app.get("/")
-async def root():
-    return {
-        "service": "BharatTranslate API",
-        "powered_by": "AI Kosh — IndicTrans2 (AI4Bharat)",
-        "status": "running",
-    }
-
-
-@app.get("/v1/health")
-async def health():
-    from services.translation_engine import translation_engine
-    return {
-        "status": "ok",
-        "model_loaded": translation_engine.is_loaded(),
-    }
+def read_root():
+    return {"message": "Welcome to BharatTranslate API"}

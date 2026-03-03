@@ -4,6 +4,8 @@ Model: ai4bharat/indictrans2-en-indic-1B (English→Indic)
        ai4bharat/indictrans2-indic-en-1B (Indic→English)
        ai4bharat/indictrans2-indic-indic-1B (Indic↔Indic)
 """
+import os
+import json
 import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
@@ -87,11 +89,11 @@ class TranslationEngine:
     def is_loaded(self) -> bool:
         return self._loaded
 
-    async def translate(self, text: str, src_lang: str, tgt_lang: str) -> str:
-        """Translate text between any supported language pair."""
+    async def translate(self, text: str, src_lang: str, tgt_lang: str, dialect: str = None) -> str:
+        """Translate text between any supported language pair, with optional dialect post-processing."""
         if not text or not text.strip():
             return ""
-        if src_lang == tgt_lang:
+        if src_lang == tgt_lang and (not dialect or dialect == "standard"):
             return text
 
         src_code = LANG_CODE_MAP.get(src_lang)
@@ -127,6 +129,7 @@ class TranslationEngine:
                 max_length=256,
                 num_beams=5,
                 num_return_sequences=1,
+                repetition_penalty=1.1, # Added to prevent repeating words/phrases
             )
 
         # Decode
@@ -138,7 +141,25 @@ class TranslationEngine:
 
         # Postprocess
         translations = ip.postprocess_batch(decoded, lang=tgt_code)
-        return translations[0] if translations else text
+        result = translations[0] if translations else text
+
+        # Dialect Post-Processing
+        if dialect and dialect != "standard":
+            try:
+                glossary_path = os.path.join(
+                    os.path.dirname(__file__),
+                    f"../data/dialect_glossaries/{dialect}.json"
+                )
+                if os.path.exists(glossary_path):
+                    with open(glossary_path, 'r', encoding='utf-8') as f:
+                        glossary = json.load(f)
+
+                    for standard_phrase, dialect_phrase in glossary.items():
+                        result = result.replace(standard_phrase, dialect_phrase)
+            except Exception as e:
+                print(f"Failed to apply dialect '{dialect}': {e}")
+
+        return result
 
 
 # Singleton

@@ -7,8 +7,11 @@ import * as Clipboard from 'expo-clipboard';
 import { TranslateAPI } from '../services/translateApi';
 
 export default function TextTranslateScreen() {
-    const [sourceLang, setSourceLang] = useState({ code: 'en', name: 'English' });
-    const [targetLang, setTargetLang] = useState({ code: 'hi', name: 'Hindi' });
+    const [sourceLang, setSourceLang] = useState('en');
+    const [targetLang, setTargetLang] = useState('hi');
+    const [sourceDialect, setSourceDialect] = useState('standard');
+    const [targetDialect, setTargetDialect] = useState('standard');
+
     const [inputText, setInputText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
     const [isFavorite, setIsFavorite] = useState(false);
@@ -19,21 +22,35 @@ export default function TextTranslateScreen() {
             return;
         }
         setTranslatedText('Translating...');
-        const result = await TranslateAPI.translateText(inputText, sourceLang.code, targetLang.code);
+        // We pass targetDialect (assuming we only apply dialect to the translated output)
+        const result = await TranslateAPI.translateText(inputText, sourceLang, targetLang, targetDialect);
         setTranslatedText(result);
     };
 
     const handleSwapLanguages = () => {
         setSourceLang(targetLang);
         setTargetLang(sourceLang);
+        setSourceDialect(targetDialect);
+        setTargetDialect(sourceDialect);
         const tempText = inputText;
         setInputText(translatedText);
         setTranslatedText(tempText);
     };
 
+    const getTTSLangCode = (lang) => {
+        const map = {
+            'en': 'en-US', 'hi': 'hi-IN', 'bn': 'bn-IN', 'ta': 'ta-IN', 'te': 'te-IN',
+            'mr': 'mr-IN', 'gu': 'gu-IN', 'kn': 'kn-IN', 'ml': 'ml-IN', 'pa': 'pa-IN',
+            'or': 'or-IN', 'as': 'as-IN', 'ur': 'ur-IN', 'sa': 'sa-IN', 'mai': 'mai-IN',
+            'sd': 'sd-IN', 'kok': 'kok-IN', 'doi': 'doi-IN', 'mni': 'mni-IN', 'sat': 'sat-IN',
+            'kas': 'ks-IN', 'brx': 'brx-IN'
+        };
+        return map[lang] || 'en-US';
+    };
+
     const handleSpeak = () => {
         if (translatedText && translatedText !== 'Translating...') {
-            Speech.speak(translatedText, { language: targetLang.code });
+            Speech.speak(translatedText, { language: getTTSLangCode(targetLang) });
         }
     };
 
@@ -59,11 +76,21 @@ export default function TextTranslateScreen() {
             </View>
 
             <View style={styles.languageBar}>
-                <LanguagePicker selectedLang={sourceLang} onSelect={setSourceLang} />
+                <LanguagePicker
+                    selectedLanguage={sourceLang}
+                    onSelectLanguage={setSourceLang}
+                    selectedDialect={sourceDialect}
+                    onSelectDialect={setSourceDialect}
+                />
                 <TouchableOpacity onPress={handleSwapLanguages} style={styles.swapButton}>
                     <Ionicons name="swap-horizontal" size={24} color="#ff6b6b" />
                 </TouchableOpacity>
-                <LanguagePicker selectedLang={targetLang} onSelect={setTargetLang} />
+                <LanguagePicker
+                    selectedLanguage={targetLang}
+                    onSelectLanguage={setTargetLang}
+                    selectedDialect={targetDialect}
+                    onSelectDialect={setTargetDialect}
+                />
             </View>
 
             <View style={styles.inputContainer}>

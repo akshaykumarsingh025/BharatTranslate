@@ -13,11 +13,21 @@ export const TranslateAPI = {
     /**
      * Translate text via the backend (IndicTrans2 model)
      */
-    async translateText(text, sourceLang, targetLang) {
+    async translateText(text, sourceLang, targetLang, targetDialect = 'standard') {
         if (!text || !text.trim()) return '';
-        if (sourceLang === targetLang) return text;
+        if (sourceLang === targetLang && targetDialect === 'standard') return text;
+
+        const { getCachedTranslation, cacheTranslation } = require('./offlineCache');
 
         try {
+            // 1. Check Offline Cache First (cache only assumes standard, could be expanded for dialects later)
+            const cachedResult = await getCachedTranslation(text, sourceLang, targetLang);
+            if (cachedResult && targetDialect === 'standard') {
+                console.log('[TranslateAPI] Cache hit for:', text);
+                return cachedResult;
+            }
+
+            // 2. Fetch from Backend
             const response = await fetch(`${BASE_URL}/translate/text`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -25,6 +35,7 @@ export const TranslateAPI = {
                     text: text,
                     source_lang: sourceLang,
                     target_lang: targetLang,
+                    dialect: targetDialect,
                 }),
             });
 
@@ -33,7 +44,14 @@ export const TranslateAPI = {
             }
 
             const data = await response.json();
-            return data.translated_text || text;
+            const resultText = data.translated_text || text;
+
+            // 3. Save to Cache
+            if (resultText !== text && targetDialect === 'standard') {
+                await cacheTranslation(text, sourceLang, targetLang, resultText);
+            }
+
+            return resultText;
         } catch (error) {
             console.error('[TranslateAPI] Error:', error);
             return `⚠️ Cannot connect to backend server. Make sure the FastAPI server is running at ${BASE_URL}`;

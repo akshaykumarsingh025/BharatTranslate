@@ -1,0 +1,64 @@
+{
+    "hi": [
+        {
+            "id": "standard",
+            "name": "Standard Hindi"
+        },
+        {
+            "id": "bhojpuri",
+            "name": "Bhojpuri"
+        },
+        {
+            "id": "rajasthani",
+            "name": "Rajasthani"
+        },
+        {
+            "id": "chhattisgarhi",
+            "name": "Chhattisgarhi"
+        },
+        {
+            "id": "maithili",
+            "name": "Maithili"
+        }
+    ],
+    "bn": [
+        {
+            "id": "standard",
+            "name": "Standard Bengali"
+        },
+        {
+            "id": "sylheti",
+            "name": "Sylheti"
+        }
+    ],
+    "ta": [
+        {
+            "id": "standard",
+            "name": "Standard Tamil"
+        },
+        {
+            "id": "srilankan",
+            "name": "Sri Lankan Tamil"
+        }
+    ],
+    "mr": [
+        {
+            "id": "standard",
+            "name": "Standard Marathi"
+        },
+        {
+            "id": "varhadi",
+            "name": "Varhadi"
+        }
+    ],
+    "pa": [
+        {
+            "id": "standard",
+            "name": "Standard Punjabi"
+        },
+        {
+            "id": "doabi",
+            "name": "Doabi"
+        }
+    ]
+}

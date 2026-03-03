@@ -6,7 +6,7 @@ import * as Clipboard from 'expo-clipboard';
 import { transliterateRomanToNative, transliterateNativeToRoman } from '../services/transliterationEngine';
 
 export default function TransliterateScreen() {
-    const [language, setLanguage] = useState({ code: 'hi', name: 'Hindi' });
+    const [language, setLanguage] = useState('hi');
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [mode, setMode] = useState('Roman → Native');
@@ -19,7 +19,7 @@ export default function TransliterateScreen() {
 
         let result;
         if (mode === 'Roman → Native') {
-            result = transliterateRomanToNative(inputText, language.code);
+            result = transliterateRomanToNative(inputText, language);
         } else {
             result = transliterateNativeToRoman(inputText);
         }
@@ -34,7 +34,7 @@ export default function TransliterateScreen() {
             return;
         }
         if (mode === 'Roman → Native') {
-            setOutputText(transliterateRomanToNative(text, language.code));
+            setOutputText(transliterateRomanToNative(text, language));
         } else {
             setOutputText(transliterateNativeToRoman(text));
         }
@@ -68,7 +68,7 @@ export default function TransliterateScreen() {
 
                 <View style={styles.langRow}>
                     <Text style={styles.label}>Script: </Text>
-                    <LanguagePicker selectedLang={language} onSelect={setLanguage} />
+                    <LanguagePicker selectedLanguage={language} onSelectLanguage={setLanguage} />
                 </View>
             </View>
 
@@ -92,7 +92,7 @@ export default function TransliterateScreen() {
 
                 <Text style={styles.sectionTitle}>
                     {mode === 'Roman → Native'
-                        ? `📝 ${language.name} script:`
+                        ? `📝 ${language} script:`
                         : '📝 Roman script:'}
                 </Text>
                 <View style={styles.outputContainer}>
