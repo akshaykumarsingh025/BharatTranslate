@@ -1,0 +1,10 @@
+fastapi==0.115.0
+uvicorn==0.30.0
+torch>=2.0.0
+transformers>=4.38.0
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+IndicTransToolkit>=0.0.2
+python-multipart>=0.0.9
+faster-whisper>=1.0.0
+easyocr>=1.7.0
